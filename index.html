@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NADIA - Natural-language Adaptive Diagram Interactive Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007acc;
+            --light-gray: #f5f5f5;
+            --dark-text: #333;
+            --light-text: #555;
+            --border-color: #eaeaea;
+            --tag-bg: #eef5fa;
+        }
+
+        body {
+            font-family: 'Source Sans 3', sans-serif;
+            background-color: var(--light-gray);
+            color: var(--dark-text);
+            margin: 0;
+            overflow: hidden;
+        }
+
+        .panel {
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+
+        #myDiagramDiv, #myPaletteDiv {
+            width: 100%;
+            height: 100%;
+            background-color: white;
+        }
+        #myPaletteDivContainer {
+             background-color: #f8fafc;
+             border-right: 1px solid var(--border-color);
+        }
+        
+        #resizer {
+            background-color: var(--border-color);
+            transition: background-color 0.2s ease;
+        }
+        #resizer:hover {
+            background-color: var(--primary-color);
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #aaa; }
+        
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+    </style>
+</head>
+<body>
+    <div class="relative flex flex-col h-screen z-10 p-5 gap-5">
+        <header class="flex flex-col items-center justify-center text-center py-2">
+            <div class="flex items-center gap-4">
+                 <img src="nadia.png" alt="NADIA Icon" class="w-25 h-20">
+                <div class="text-left">
+                    <h1 id="nadia-title" class="text-3xl font-black tracking-wider" style="color: var(--dark-text);">NADIA</h1>
+                    <p class="text-sm opacity-80" style="color: var(--primary-color);">Natural-language Adaptive Diagram Interactive Assistant</p>
+                </div>
+            </div>
+            <div class="mt-4 flex flex-wrap justify-center gap-2">
+                <span class="bg-[#eef5fa] text-[#007acc] text-xs font-semibold px-3 py-1 rounded-full">State Chart</span>
+                <span class="bg-[#eef5fa] text-[#007acc] text-xs font-semibold px-3 py-1 rounded-full">Logic Circuit</span>
+                 <span class="bg-[#eef5fa] text-[#007acc] text-xs font-semibold px-3 py-1 rounded-full">Flowchart</span>
+                <span class="bg-[#eef5fa] text-[#007acc] text-xs font-semibold px-3 py-1 rounded-full">Mind Map</span>
+            </div>
+        </header>
+
+        <div id="main-container" class="flex flex-1 overflow-hidden gap-4">
+            <div id="left-panel" class="panel flex flex-col p-6 fade-in-up" style="flex-basis: 50%; animation-delay: 0.3s;">
+                <h2 class="text-xl font-bold mb-4 text-center" style="color: var(--dark-text);">Your Text Description</h2>
+                <div id="text-display" class="w-full flex-1 p-4 border rounded-lg leading-relaxed hidden" style="border-color: var(--border-color);"></div>
+                <textarea id="userInput" class="w-full flex-1 p-4 bg-white border rounded-lg focus:outline-none focus:ring-2 transition leading-relaxed placeholder-gray-500" style="color: var(--dark-text); border-color: var(--border-color); --tw-ring-color: var(--primary-color);" placeholder="Try one of these examples:
+
+State Chart:
+'A Start state leads to a Pending state. From Pending, it can go to either an Approved or Rejected state, both of which lead to the End state.'
+
+Logic Circuit:
+'Input A and B go to an AND gate. The output of the AND gate and Input C go to an OR gate, which connects to an LED.'
+
+Flowchart:
+'Start the process. The first step is to Prepare Ingredients. Then, a decision: Is oven preheated?. If yes, Bake Cake. If no, Preheat Oven and then Bake Cake. Finally, End the process.'
+
+Mind Map:
+'A mind map about effective project management. The main branches are Planning, Execution, and Review. Planning has sub-branches for Define Scope and Set Milestones.'"></textarea>
+                 <div class="flex space-x-4 mt-4">
+                    <button id="generateBtn" class="flex-1 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 transition-all duration-300 transform hover:scale-105 shadow-lg" style="background-color: var(--primary-color); --tw-ring-color: var(--primary-color);">
+                        Generate Diagram
+                    </button>
+                </div>
+            </div>
+
+            <div id="resizer" class="w-2 rounded cursor-col-resize transition"></div>
+
+            <div id="right-panel" class="panel flex-1 flex flex-col p-6 fade-in-up" style="animation-delay: 0.5s;">
+                 <div class="relative mb-4">
+                    <h2 class="text-xl font-bold text-center" style="color: var(--dark-text);">Generated Diagram</h2>
+                    <div id="diagram-controls" class="absolute top-1/2 -translate-y-1/2 right-0 flex items-center space-x-1 bg-gray-100 p-1 rounded-lg border" style="border-color: var(--border-color);">
+                        <button id="reset-layout-btn" title="Reset Layout" class="p-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2" style="--tw-ring-color: var(--primary-color);"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg></button>
+                        <button id="zoom-in-btn" title="Zoom In" class="p-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2" style="--tw-ring-color: var(--primary-color);"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg></button>
+                        <button id="zoom-out-btn" title="Zoom Out" class="p-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2" style="--tw-ring-color: var(--primary-color);"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path></svg></button>
+                        <button id="fit-to-size-btn" title="Fit to Size" class="p-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2" style="--tw-ring-color: var(--primary-color);"><svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1v4m0 0h-4m4 0l-5-5M4 16v4m0 0h4m-4 0l5-5m11 1v-4m0 0h-4m4 0l-5 5"></path></svg></button>
+                    </div>
+                </div>
+                 <div class="flex-1 flex flex-row bg-white border rounded-lg overflow-hidden" style="border-color: var(--border-color);">
+                    <div id="myPaletteDivContainer" class="w-48 p-2 overflow-y-auto">
+                        <div id="myPaletteDiv" style="background-color: transparent;"></div>
+                    </div>
+                    <div id="myDiagramDiv" class="flex-1"></div>
+                </div>
+                <div class="flex justify-center mt-4">
+                    <button id="regenerateBtn" class="font-semibold py-2 px-5 rounded-lg focus:outline-none focus:ring-2 transition-all duration-300 transform hover:scale-105 shadow-sm" style="background-color: transparent; color: var(--primary-color); border: 2px solid var(--primary-color); --tw-ring-color: var(--primary-color);">
+                        Re-generate Text from Diagram
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://gojs.net/latest/release/go.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/create-gojs-kit@3.1.0/dist/extensions/Figures.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
+
+    <script src="statechart-template.js"></script>
+    <script src="logiccircuit-template.js"></script>
+    <script src="flowchart-template.js"></script>
+    <script src="mindmap-template.js"></script>
+
+    <script>
+        go.Diagram.licenseKey = "YOUR_GOJS_LICENSE_KEY";
+
+        let myDiagram = null;
+        let myPalette = null;
+        const $ = go.GraphObject.make;
+        const markdownConverter = new showdown.Converter();
+        let originalText = "";
+
+        function initializeDiagrams() {
+            myDiagram = $(go.Diagram, "myDiagramDiv", { "undoManager.isEnabled": true, initialContentAlignment: go.Spot.Center, 'toolManager.mouseWheelBehavior': go.WheelMode.Zoom });
+            myPalette = $(go.Palette, "myPaletteDiv", { nodeTemplateMap: myDiagram.nodeTemplateMap, layout: $(go.GridLayout, { wrappingColumn: 1, alignment: go.GridLayout.Location, cellSize: new go.Size(1,1) }) });
+        }
+        
+        document.addEventListener("DOMContentLoaded", initializeDiagrams);
+
+        // --- Event Listeners & UI Logic ---
+        document.getElementById('generateBtn').addEventListener('click', generateDiagramFromText);
+        document.getElementById('regenerateBtn').addEventListener('click', regenerateTextFromDiagram);
+        document.getElementById('zoom-in-btn').addEventListener('click', () => myDiagram.commandHandler.increaseZoom());
+        document.getElementById('zoom-out-btn').addEventListener('click', () => myDiagram.commandHandler.decreaseZoom());
+        document.getElementById('fit-to-size-btn').addEventListener('click', () => myDiagram.commandHandler.zoomToFit());
+        document.getElementById('reset-layout-btn').addEventListener('click', () => myDiagram.layoutDiagram(true));
+        
+        const resizer = document.getElementById('resizer');
+        const leftPanel = document.getElementById('left-panel');
+        let isResizing = false;
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', () => { isResizing = false; document.removeEventListener('mousemove', handleMouseMove); myDiagram.requestUpdate(); });
+        });
+        function handleMouseMove(e) {
+            if (!isResizing) return;
+            const container = document.getElementById('main-container');
+            const newLeftWidth = e.clientX - container.getBoundingClientRect().left;
+            if (newLeftWidth > 300 && newLeftWidth < (container.getBoundingClientRect().width - 400)) { leftPanel.style.flexBasis = `${newLeftWidth}px`; }
+        }
+        
+        // --- Diagram Generation ---
+        async function generateDiagramFromText() {
+            const generateBtn = document.getElementById('generateBtn');
+            const userInput = document.getElementById('userInput');
+            const textDisplay = document.getElementById('text-display');
+
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Generating...`;
+            
+            userInput.classList.remove('hidden');
+            textDisplay.classList.add('hidden');
+            originalText = userInput.value;
+
+            if (!originalText.trim()) {
+                myDiagram.model = new go.GraphLinksModel([], []);
+                myPalette.model = new go.Model([]);
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = "Generate Diagram";
+                return;
+            }
+
+            const schema = await getSchemaFromBackend(originalText);
+            if (schema) {
+                renderDiagram(schema);
+                populatePalette(schema.type, schema.class);
+            }
+            generateBtn.disabled = false;
+            generateBtn.textContent = "Generate Diagram";
+        }
+
+        async function regenerateTextFromDiagram() {
+            const regenerateBtn = document.getElementById('regenerateBtn');
+            const generateBtn = document.getElementById('generateBtn');
+            const userInput = document.getElementById('userInput');
+            const textDisplay = document.getElementById('text-display');
+
+            regenerateBtn.disabled = true;
+            generateBtn.disabled = true;
+            userInput.disabled = true;
+            regenerateBtn.innerHTML = 'Regenerating...';
+
+            const diagramJson = myDiagram.model.toJson();
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/regenerate-text', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ diagram_json: diagramJson, original_text: originalText })
+                });
+
+                if (!response.ok) {
+                    throw new Error((await response.json()).error || 'Failed to regenerate text.');
+                }
+
+                const data = await response.json();
+                const updatedText = data.updated_text; // Corrected key
+
+                // Render the markdown to HTML and display it
+                textDisplay.innerHTML = markdownConverter.makeHtml(updatedText);
+                userInput.classList.add('hidden');
+                textDisplay.classList.remove('hidden');
+
+            } catch (error) {
+                console.error("Error regenerating text:", error);
+                alert("Could not regenerate text from the backend.\nError: " + error.message);
+            } finally {
+                regenerateBtn.disabled = false;
+                generateBtn.disabled = false;
+                userInput.disabled = false;
+                regenerateBtn.innerHTML = 'Re-generate Text from Diagram';
+            }
+        }
+
+
+        async function getSchemaFromBackend(text) {
+            try {
+                const response = await fetch('http://127.0.0.1:5000/generate-diagram', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+                if (!response.ok) throw new Error((await response.json()).error || `API call failed`);
+                return await response.json();
+            } catch (error) {
+                console.error("Error calling backend:", error);
+                alert("Could not connect to the backend server.\nPlease ensure the Python server (`app.py`) is running.\n\nError: " + error.message);
+                return null;
+            }
+        }
+
+        function populatePalette(type, modelClass) {
+            let data = [];
+            let model = new go.GraphLinksModel();
+
+            if (type === 'stateChart') {
+                data = [ { text: "Start", type: "Start" }, { text: "State" }, { text: "End", type: "End" } ];
+            } else if (type === 'logicCircuit') {
+                 data = [
+                    { category: "input", text:"Input", isOn: true }, { category: "switch", text: "Switch", isOn: true },
+                    { category: "output", text: "LED" }, { category: "and", text: "AND" }, { category: "or", text: "OR" },
+                    { category: "not", text: "NOT" }, { category: "xor", text: "XOR" }, { category: "nand", text: "NAND" },
+                    { category: "nor", text: "NOR" }, { category: "xnor", text: "XNOR" }
+                ];
+            } else if (type === 'flowchart') {
+                data = [
+                    { category: "Start", text: "Start" }, { text: "Step" }, { category: "Conditional", text: "Conditional"},
+                    { category: "End", text: "End" }
+                ];
+            } else if (modelClass === 'go.TreeModel') {
+                data = [ { text: "Idea", brush: "skyblue" } ];
+            }
+            model.nodeDataArray = data;
+            myPalette.model = model;
+        }
+
+        function renderDiagram(schema) {
+            myDiagram.nodeTemplateMap.clear();
+
+            let model;
+            if (schema.class === "go.TreeModel") {
+                setupMindmap(myDiagram, $);
+                model = go.Model.fromJson(schema);
+            } else {
+                if (schema.type === "stateChart") setupStateChart(myDiagram, $);
+                else if (schema.type === "logicCircuit") setupLogicCircuit(myDiagram, $);
+                else if (schema.type === "flowchart") setupFlowchart(myDiagram, $);
+                
+                model = new go.GraphLinksModel(schema.nodes, schema.links);
+                model.nodeKeyProperty = "key";
+                model.linkFromKeyProperty = "from";
+                model.linkToKeyProperty = "to";
+                model.linkFromPortIdProperty = "fromPort";
+                model.linkToPortIdProperty = "toPort";
+            }
+             myDiagram.model = model;
+        }
+    </script>
+</body>
+</html>
+
