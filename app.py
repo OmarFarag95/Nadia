@@ -10,6 +10,7 @@ model_name = "gemini-2.5-flash-preview-09-2025"
 # --- Gemini API Configuration ---
 try:
     # This is a placeholder key. Replace with your actual key in a secure way.
+    api_key = None  #os.getenv("GEMINI_API_KEY")
     if not api_key or api_key == "YOUR_API_KEY":
         print("WARNING: Gemini API key is not set. Using placeholder logic.")
         #TODO: Add your gemini API key here for actual use. Free tier will be enough for testing.
@@ -64,6 +65,12 @@ Based on the detected type, you MUST extract the nodes and their relationships a
     { "key": 3, "parent": 0, "text": "Branch 2", "brush": "palevioletred", "dir": "left" }
   ]
 }
+
+**5. Pie Chart (Model):**
+{ "type": "pieChart", "nodeDataArray": [ { "key": 0, "text": "Chart Title", "slices": [ { "text": "Slice 1", "count": 10, "color": "#B378C1" }, { "text": "Slice 2", "count": 20, "color": "#F25F5C" } ] } ] }
+- For Pie Charts, extract the title and the list of slices with their text and count. Assign a unique color to each slice.
+
+
 - The root node has no "parent" property and should have a distinct "brush" color (e.g., "#007acc").
 - All other nodes MUST have a "parent" property referencing the key of their parent node.
 - Assign "dir" (direction) as either "right" or "left" for branches from the root. Sub-branches should inherit the direction of their parent branch.
@@ -99,70 +106,20 @@ def generate_diagram():
             # --- This is placeholder logic for demonstration if API key is not set. ---
             lower_text = user_text.lower()
             schema = {}
-            if "mind map" in lower_text:
-                schema = {
-                    "class": "go.TreeModel",
-                    "nodeDataArray": [
-                        {"key": 0, "text": "Mind Map", "brush": "#007acc"},
-                        {
-                            "key": 1,
-                            "parent": 0,
-                            "text": "Branch 1",
-                            "brush": "skyblue",
-                            "dir": "right",
-                        },
-                        {
-                            "key": 2,
-                            "parent": 0,
-                            "text": "Branch 2",
-                            "brush": "palevioletred",
-                            "dir": "left",
-                        },
-                    ],
-                }
-            elif any(keyword in lower_text for keyword in ["state", "transition"]):
-                nodes = [
-                    {"key": "Start", "text": "Start", "type": "Start"},
-                    {"key": "State 1", "text": "State 1"},
-                    {"key": "End", "text": "End", "type": "End"},
-                ]
-                links = [
-                    {"from": "Start", "to": "State 1"},
-                    {"from": "State 1", "to": "End"},
-                ]
+            if "pie chart" in lower_text or "poll" in lower_text:
+                schema = { "type": "pieChart", "nodeDataArray": [ { "key": 0, "text": "Sample Poll", "slices": [ { "text": "Option 1", "count": 21, "color": "#B378C1" }, { "text": "Option 2", "count": 11, "color": "#F25F5C" } ] } ] }
+            elif "mind map" in lower_text:
+                schema = { "class": "go.TreeModel", "nodeDataArray": [ {"key":0, "text":"Mind Map", "brush": "#007acc"}, {"key":1, "parent":0, "text":"Branch 1", "brush":"skyblue", "dir":"right"}, {"key":2, "parent":0, "text":"Branch 2", "brush":"palevioletred", "dir":"left"} ] }
+            elif any(keyword in lower_text for keyword in ['state', 'transition']):
+                nodes = [{"key": "Start", "text": "Start", "type": "Start"}, {"key": "State 1", "text": "State 1"}, {"key": "End", "text": "End", "type": "End"}]
+                links = [{"from": "Start", "to": "State 1"}, {"from": "State 1", "to": "End"}]
                 schema = {"type": "stateChart", "nodes": nodes, "links": links}
-            elif any(keyword in lower_text for keyword in ["gate", "input", "output"]):
-                nodes = [
-                    {
-                        "key": "Input A",
-                        "category": "input",
-                        "text": "Input A",
-                        "isOn": True,
-                    },
-                    {
-                        "key": "Input B",
-                        "category": "input",
-                        "text": "Input B",
-                        "isOn": False,
-                    },
-                    {"key": "AND1", "category": "and", "text": "AND"},
-                    {"key": "Output Q", "category": "output", "text": "Q"},
-                ]
-                links = [
-                    {"from": "Input A", "to": "AND1", "toPort": "in1"},
-                    {"from": "Input B", "to": "AND1", "toPort": "in2"},
-                    {"from": "AND1", "to": "Output Q"},
-                ]
+            elif any(keyword in lower_text for keyword in ['gate', 'input', 'output']):
+                nodes = [{"key": "Input A", "category": "input", "text": "Input A", "isOn": True}, {"key": "Input B", "category": "input", "text": "Input B", "isOn": False}, {"key": "AND1", "category": "and", "text": "AND"}, {"key": "Output Q", "category": "output", "text": "Q"}]
+                links = [{"from": "Input A", "to": "AND1", "toPort": "in1"}, {"from": "Input B", "to": "AND1", "toPort": "in2"}, {"from": "AND1", "to": "Output Q"}]
                 schema = {"type": "logicCircuit", "nodes": nodes, "links": links}
             else:
-                return (
-                    jsonify(
-                        {
-                            "error": "Could not determine diagram type with placeholder logic."
-                        }
-                    ),
-                    400,
-                )
+                return jsonify({"error": "Could not determine diagram type with placeholder logic."}), 400
             return jsonify(schema)
             # --- End of Placeholder Logic ---
 
@@ -207,4 +164,5 @@ def regenerate_text():
 
 
 if __name__ == "__main__":
+    # run app with most of logging enabled and verbosity
     app.run(debug=True)

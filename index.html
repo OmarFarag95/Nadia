@@ -74,6 +74,7 @@
                 <span class="bg-[#eef5fa] text-[#007acc] text-xs font-semibold px-3 py-1 rounded-full">Logic Circuit</span>
                  <span class="bg-[#eef5fa] text-[#007acc] text-xs font-semibold px-3 py-1 rounded-full">Flowchart</span>
                 <span class="bg-[#eef5fa] text-[#007acc] text-xs font-semibold px-3 py-1 rounded-full">Mind Map</span>
+                <span class="bg-[#eef5fa] text-[#007acc] text-xs font-semibold px-3 py-1 rounded-full">Piechart</span>
             </div>
         </header>
 
@@ -93,7 +94,12 @@ Flowchart:
 'Start the process. The first step is to Prepare Ingredients. Then, a decision: Is oven preheated?. If yes, Bake Cake. If no, Preheat Oven and then Bake Cake. Finally, End the process.'
 
 Mind Map:
-'A mind map about effective project management. The main branches are Planning, Execution, and Review. Planning has sub-branches for Define Scope and Set Milestones.'"></textarea>
+'A mind map about effective project management. The main branches are Planning, Execution, and Review. Planning has sub-branches for Define Scope and Set Milestones.'
+
+Piechart:
+'A pie chart showing the market share of smartphone brands: Brand A 40%, Brand B 25%, Brand C 20%, Others 15%.'
+"></textarea>
+
                  <div class="flex space-x-4 mt-4">
                     <button id="generateBtn" class="flex-1 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 transition-all duration-300 transform hover:scale-105 shadow-lg" style="background-color: var(--primary-color); --tw-ring-color: var(--primary-color);">
                         Generate Diagram
@@ -137,6 +143,7 @@ Mind Map:
     <script src="logiccircuit-template.js"></script>
     <script src="flowchart-template.js"></script>
     <script src="mindmap-template.js"></script>
+    <script src="piechart-template.js"></script>
 
     <script>
         go.Diagram.licenseKey = "YOUR_GOJS_LICENSE_KEY";
@@ -285,6 +292,10 @@ Mind Map:
                     { category: "Start", text: "Start" }, { text: "Step" }, { category: "Conditional", text: "Conditional"},
                     { category: "End", text: "End" }
                 ];
+            } else if (type === 'pieChart') {
+                // Palette for pie chart could be used to add new slices
+                data = [ { text: "New Slice", count: 1, color: "lightgray"} ];
+            
             } else if (modelClass === 'go.TreeModel') {
                 data = [ { text: "Idea", brush: "skyblue" } ];
             }
@@ -299,7 +310,12 @@ Mind Map:
             if (schema.class === "go.TreeModel") {
                 setupMindmap(myDiagram, $);
                 model = go.Model.fromJson(schema);
-            } else {
+            } else if(schema.type === "pieChart") {
+                setupPieChart(myDiagram, $);
+                model = new go.Model(schema.nodeDataArray);
+                }
+                else { 
+                
                 if (schema.type === "stateChart") setupStateChart(myDiagram, $);
                 else if (schema.type === "logicCircuit") setupLogicCircuit(myDiagram, $);
                 else if (schema.type === "flowchart") setupFlowchart(myDiagram, $);
