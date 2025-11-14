@@ -18,7 +18,7 @@ function setupMindmap(diagram, $) {
     }
     go.Diagram.inherit(CustomTreeLayout, go.TreeLayout);
 
-    CustomTreeLayout.prototype.makeNetwork = function(coll) {
+    CustomTreeLayout.prototype.makeNetwork = function (coll) {
         const net = go.TreeLayout.prototype.makeNetwork.call(this, coll);
         const root = net.findVertex(this.diagram.findNodeForKey(0));
         if (root !== null) {
@@ -41,7 +41,7 @@ function setupMindmap(diagram, $) {
         return net;
     };
 
-    CustomTreeLayout.prototype.assignTreeVertexValues = function(v) {
+    CustomTreeLayout.prototype.assignTreeVertexValues = function (v) {
         // for the root node, assign the angle based on the child's "dir" property
         if (v.node && v.parent === null) {
             v.children.forEach(c => {

@@ -4,14 +4,14 @@ function setupLogicCircuit(diagram, $) {
     const gray = '#e5e7eb';
     const darkGray = '#6b7280';
 
-    diagram.linkTemplate = $(go.Link, { 
-            routing: go.Routing.Orthogonal, 
-            curve: go.Curve.JumpOver, 
-            corner: 5, 
-            reshapable: true, 
-            relinkableFrom: true, 
-            relinkableTo: true 
-        },
+    diagram.linkTemplate = $(go.Link, {
+        routing: go.Routing.Orthogonal,
+        curve: go.Curve.JumpOver,
+        corner: 5,
+        reshapable: true,
+        relinkableFrom: true,
+        relinkableTo: true
+    },
         new go.Shape({ name: 'SHAPE', strokeWidth: 2, stroke: red }));
 
     const nodeStyle = () => ({ locationSpot: go.Spot.Center, selectionAdorned: false });
@@ -21,36 +21,36 @@ function setupLogicCircuit(diagram, $) {
 
     diagram.nodeTemplateMap.add("input",
         $(go.Node, "Spot", nodeStyle(), { click: (e, obj) => { e.diagram.startTransaction("toggle input"); e.diagram.model.setDataProperty(obj.part.data, "isOn", !obj.part.data.isOn); e.diagram.commitTransaction("toggle input"); } },
-        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
-        $(go.Shape, "Circle", { ...shapeStyle(), desiredSize: new go.Size(50, 50)}, new go.Binding("fill", "isOn", on => on ? "#dcfce7" : "#fee2e2")),
-        $(go.TextBlock, { font: "bold 12px sans-serif", editable: true, stroke: "#374151" }, new go.Binding("text", "text")),
-        $(go.Shape, "Rectangle", { ...portStyle(false, go.Spot.Right), portId: "" })
-    ));
+            new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+            $(go.Shape, "Circle", { ...shapeStyle(), desiredSize: new go.Size(50, 50) }, new go.Binding("fill", "isOn", on => on ? "#dcfce7" : "#fee2e2")),
+            $(go.TextBlock, { font: "bold 12px sans-serif", editable: true, stroke: "#374151" }, new go.Binding("text", "text")),
+            $(go.Shape, "Rectangle", { ...portStyle(false, go.Spot.Right), portId: "" })
+        ));
 
     diagram.nodeTemplateMap.add("output",
         $(go.Node, "Spot", nodeStyle(), new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
             $(go.Panel, "Spot",
                 $(go.Shape, "RoundedRectangle", { fill: 'transparent', parameter1: Infinity, parameter2: 0b0011, width: 25, height: 22, strokeWidth: 2, stroke: darkGray }),
                 $(go.Shape, "Rectangle", { alignment: go.Spot.Bottom, alignmentFocus: new go.Spot(0.5, 0.8), strokeWidth: 0, fill: null, width: 40, height: 43 }, new go.Binding("fill", "isOn", isOn => isOn ? outBrush : "transparent")),
-                $(go.Shape, "Rectangle", { ...shapeStyle(), width: 32, height: 15, alignment: go.Spot.Bottom, alignmentFocus: new go.Spot(0.5, 0, 0, 2)})
+                $(go.Shape, "Rectangle", { ...shapeStyle(), width: 32, height: 15, alignment: go.Spot.Bottom, alignmentFocus: new go.Spot(0.5, 0, 0, 2) })
             ),
             $(go.TextBlock, { font: "bold 12px sans-serif", editable: true, stroke: "#374151", alignment: new go.Spot(0.5, 0.3) }, new go.Binding("text", "text")),
             $(go.Shape, portStyle(true, go.Spot.Left)).set({ portId: '', alignment: go.Spot.Left })
-    ));
+        ));
 
     diagram.nodeTemplateMap.add("switch",
         $(go.Node, "Vertical", nodeStyle(), { click: (e, obj) => { e.diagram.startTransaction("toggle switch"); e.diagram.model.setDataProperty(obj.part.data, "isOn", !obj.part.data.isOn); e.diagram.commitTransaction("toggle switch"); } },
-        new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
-        $(go.TextBlock, { font: "bold 12px sans-serif", editable: true, margin: new go.Margin(0,0,4,0), stroke: "#374151" }, new go.Binding("text", "text")),
-        $(go.Panel, "Auto",
-            $(go.Shape, "Rectangle", { stroke: darkGray, strokeWidth: 1, fill: "white", width: 30, height: 50 }),
-            $(go.Shape, "Rectangle", { stroke: darkGray, strokeWidth: 1, width: 20, height: 20 },
-                new go.Binding("fill", "isOn", on => on ? "#86efac" : "#e5e7eb"),
-                new go.Binding("alignment", "isOn", on => on ? go.Spot.Top : go.Spot.Bottom)
-            )
-        ),
-        $(go.Shape, "Rectangle", { ...portStyle(false, go.Spot.Bottom), portId: "out" })
-    ));
+            new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
+            $(go.TextBlock, { font: "bold 12px sans-serif", editable: true, margin: new go.Margin(0, 0, 4, 0), stroke: "#374151" }, new go.Binding("text", "text")),
+            $(go.Panel, "Auto",
+                $(go.Shape, "Rectangle", { stroke: darkGray, strokeWidth: 1, fill: "white", width: 30, height: 50 }),
+                $(go.Shape, "Rectangle", { stroke: darkGray, strokeWidth: 1, width: 20, height: 20 },
+                    new go.Binding("fill", "isOn", on => on ? "#86efac" : "#e5e7eb"),
+                    new go.Binding("alignment", "isOn", on => on ? go.Spot.Top : go.Spot.Bottom)
+                )
+            ),
+            $(go.Shape, "Rectangle", { ...portStyle(false, go.Spot.Bottom), portId: "out" })
+        ));
 
     const makeGateTemplate = (shape, text) => {
         const node = $(go.Node, "Spot", nodeStyle(), new go.Binding("location", "loc", go.Point.parse).makeTwoWay(go.Point.stringify),
@@ -94,10 +94,10 @@ function setupLogicCircuit(diagram, $) {
     }
 
     diagram.addDiagramListener("ChangedSelection", updateLogic);
-    diagram.addModelChangedListener( e => { if (e.isTransactionFinished) { updateLogic(); } });
-    
+    diagram.addModelChangedListener(e => { if (e.isTransactionFinished) { updateLogic(); } });
+
     function loop() { setTimeout(() => { updateLogic(); loop(); }, 250); }
     loop();
-    
+
     diagram.layout = $(go.LayeredDigraphLayout, { direction: 0, layerSpacing: 50 });
 }
